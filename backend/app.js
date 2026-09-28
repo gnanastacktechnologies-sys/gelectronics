@@ -23,21 +23,26 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Health Check API
-app.get('/api/health', (req, res) => {
+app.get(['/api/health', '/health'], (req, res) => {
   res.json({ status: 'ok', system: 'G Electronics API Server', timestamp: new Date() });
 });
 
-// API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/projects', projectRoutes);
-app.use('/api/purchases', purchaseRoutes);
-app.use('/api/stock', stockRoutes);
-app.use('/api/accessories', accessoryRoutes);
-app.use('/api/assets', assetRoutes);
-app.use('/api/assembly', assemblyRoutes);
-app.use('/api/testing', testingRoutes);
-app.use('/api/buyers', buyerRoutes);
-app.use('/api/dashboard', dashboardRoutes);
+// API Routes (mounted both with and without /api for Vercel serverless routing compatibility)
+const registerRoutes = (prefix) => {
+  app.use(`${prefix}/auth`, authRoutes);
+  app.use(`${prefix}/projects`, projectRoutes);
+  app.use(`${prefix}/purchases`, purchaseRoutes);
+  app.use(`${prefix}/stock`, stockRoutes);
+  app.use(`${prefix}/accessories`, accessoryRoutes);
+  app.use(`${prefix}/assets`, assetRoutes);
+  app.use(`${prefix}/assembly`, assemblyRoutes);
+  app.use(`${prefix}/testing`, testingRoutes);
+  app.use(`${prefix}/buyers`, buyerRoutes);
+  app.use(`${prefix}/dashboard`, dashboardRoutes);
+};
+
+registerRoutes('/api');
+registerRoutes('');
 
 // Error Middleware
 app.use(notFound);
