@@ -22,9 +22,14 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Health Check API
-app.get(['/api/health', '/health'], (req, res) => {
-  res.json({ status: 'ok', system: 'G Electronics API Server', timestamp: new Date() });
+// Welcome / Health API
+app.get(['/', '/api/health', '/health'], (req, res) => {
+  res.json({
+    status: 'ok',
+    system: 'G Electronics API Backend',
+    message: 'Backend server is running successfully on Vercel!',
+    timestamp: new Date(),
+  });
 });
 
 // API Routes (mounted both with and without /api for Vercel serverless routing compatibility)
