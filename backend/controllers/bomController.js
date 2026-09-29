@@ -8,7 +8,7 @@ import PurchaseOrder from '../models/PurchaseOrder.js';
 export const getBOMItems = async (req, res, next) => {
   try {
     const { projectId } = req.params;
-    const { search, procurementMode, purchaseStatus } = req.query;
+    const { search, procurementMode, purchaseStatus, stage } = req.query;
 
     const filter = { project: projectId };
 
@@ -18,6 +18,7 @@ export const getBOMItems = async (req, res, next) => {
         { modelNumber: { $regex: search, $options: 'i' } },
         { bomItemNumber: { $regex: search, $options: 'i' } },
         { buyerName: { $regex: search, $options: 'i' } },
+        { stage: { $regex: search, $options: 'i' } },
       ];
     }
 
@@ -27,6 +28,10 @@ export const getBOMItems = async (req, res, next) => {
 
     if (purchaseStatus && purchaseStatus !== 'All') {
       filter.purchaseStatus = purchaseStatus;
+    }
+
+    if (stage && stage !== 'All') {
+      filter.stage = stage;
     }
 
     const bomItems = await ProjectBOMItem.find(filter).sort({ bomItemNumber: 1 });
@@ -54,6 +59,7 @@ export const addBOMItem = async (req, res, next) => {
       buyerName,
       procurementMode,
       isAccessory,
+      stage,
     } = req.body;
 
     const project = await Project.findById(projectId);
@@ -113,6 +119,7 @@ export const addBOMItem = async (req, res, next) => {
       buyerName: buyerName ? buyerName.trim() : '',
       procurementMode: procurementMode || 'Online',
       isAccessory: Boolean(isAccessory),
+      stage: stage && stage.trim() ? stage.trim() : 'Stage 1',
     });
 
     res.status(201).json(newItem);
@@ -139,6 +146,7 @@ export const updateBOMItem = async (req, res, next) => {
       buyerName,
       procurementMode,
       isAccessory,
+      stage,
       purchaseStatus,
       stockStatus,
     } = req.body;
@@ -195,6 +203,7 @@ export const updateBOMItem = async (req, res, next) => {
     if (buyerName !== undefined) bomItem.buyerName = buyerName.trim();
     if (procurementMode !== undefined) bomItem.procurementMode = procurementMode;
     if (isAccessory !== undefined) bomItem.isAccessory = Boolean(isAccessory);
+    if (stage !== undefined) bomItem.stage = stage.trim() || 'Stage 1';
     if (purchaseStatus !== undefined) bomItem.purchaseStatus = purchaseStatus;
     if (stockStatus !== undefined) bomItem.stockStatus = stockStatus;
 

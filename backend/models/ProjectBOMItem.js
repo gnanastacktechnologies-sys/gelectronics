@@ -66,6 +66,11 @@ const projectBOMItemSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    stage: {
+      type: String,
+      trim: true,
+      default: 'Stage 1',
+    },
     purchaseStatus: {
       type: String,
       enum: ['Not Purchased', 'Pending', 'Ordered', 'Partially Received', 'Received', 'Cancelled', 'Returned', 'Damaged'],

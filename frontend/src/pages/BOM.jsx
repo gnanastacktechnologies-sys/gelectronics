@@ -10,6 +10,11 @@ import {
   fileToBase64,
 } from '../utils/imageUtils';
 import {
+  getStageBadgeStyle,
+  DEFAULT_STAGES,
+  getStagePillColor,
+} from '../utils/stageUtils';
+import {
   FiPlus,
   FiEdit,
   FiTrash2,
@@ -23,6 +28,7 @@ import {
   FiImage,
   FiExternalLink,
   FiUpload,
+  FiLayers,
 } from 'react-icons/fi';
 
 const BOM = () => {
@@ -40,6 +46,7 @@ const BOM = () => {
   const [search, setSearch] = useState('');
   const [modeFilter, setModeFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [stageFilter, setStageFilter] = useState('All');
 
   // Modal State for Add/Edit BOM Item
   const [isBOMModalOpen, setIsBOMModalOpen] = useState(false);
@@ -56,6 +63,7 @@ const BOM = () => {
     procurementMode: 'Online',
     buyerName: 'Amazon',
     isAccessory: false,
+    stage: 'Stage 1',
   });
 
   // Single Item Order Modal State
@@ -184,6 +192,7 @@ const BOM = () => {
           search,
           procurementMode: modeFilter !== 'All' ? modeFilter : undefined,
           purchaseStatus: statusFilter !== 'All' ? statusFilter : undefined,
+          stage: stageFilter !== 'All' ? stageFilter : undefined,
         },
       });
       const items = bomRes.data || [];
@@ -198,7 +207,7 @@ const BOM = () => {
 
   useEffect(() => {
     fetchBOMForProject();
-  }, [selectedProjectId, search, modeFilter, statusFilter]);
+  }, [selectedProjectId, search, modeFilter, statusFilter, stageFilter]);
 
   const handleProjectSelect = (projId) => {
     setSelectedProjectId(projId);
@@ -223,6 +232,7 @@ const BOM = () => {
       procurementMode: 'Online',
       buyerName: buyers.length > 0 ? buyers[0].name : 'Amazon',
       isAccessory: false,
+      stage: 'Stage 1',
     });
     setIsBOMModalOpen(true);
   };
@@ -247,6 +257,7 @@ const BOM = () => {
       procurementMode: item.procurementMode || 'Online',
       buyerName: item.buyerName || '',
       isAccessory: Boolean(item.isAccessory),
+      stage: item.stage || 'Stage 1',
     });
     setIsBOMModalOpen(true);
   };
@@ -391,6 +402,19 @@ const BOM = () => {
           </div>
         );
       },
+    },
+    {
+      header: 'Stage',
+      cell: (row) => (
+        <span
+          className={`px-2.5 py-1 rounded-lg border text-xs font-extrabold font-mono inline-flex items-center space-x-1.5 ${getStageBadgeStyle(
+            row.stage
+          )}`}
+        >
+          <FiLayers className="w-3 h-3 shrink-0" />
+          <span>{row.stage || 'Stage 1'}</span>
+        </span>
+      ),
     },
     {
       header: 'Qty & Unit',
@@ -608,12 +632,33 @@ const BOM = () => {
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search BOM description, model, buyer..."
+                placeholder="Search description, model, buyer, stage..."
                 className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-700/80 rounded-xl text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition"
               />
             </div>
 
             <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto text-xs">
+              <div className="flex items-center space-x-2">
+                <span className="text-slate-400 font-semibold flex items-center gap-1">
+                  <FiLayers className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Stage:</span>
+                </span>
+                <select
+                  value={stageFilter}
+                  onChange={(e) => setStageFilter(e.target.value)}
+                  className="px-2.5 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-slate-200 font-semibold"
+                >
+                  <option value="All">All Stages</option>
+                  {Array.from(
+                    new Set([...DEFAULT_STAGES, ...bomItems.map((i) => i.stage).filter(Boolean)])
+                  ).map((stg) => (
+                    <option key={stg} value={stg}>
+                      {stg}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <div className="flex items-center space-x-2">
                 <span className="text-slate-400 font-semibold">Mode:</span>
                 <select
@@ -641,6 +686,50 @@ const BOM = () => {
                 </select>
               </div>
             </div>
+          </div>
+
+          {/* Stage-wise Highlight Filter Bar */}
+          <div className="p-3.5 bg-slate-900 border border-cyan-500/20 rounded-2xl flex flex-wrap items-center gap-2 shadow-lg">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-1 flex items-center gap-1.5">
+              <FiLayers className="w-4 h-4 text-cyan-400" />
+              <span>Stages Highlight:</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => setStageFilter('All')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-extrabold border transition cursor-pointer flex items-center space-x-1.5 ${
+                stageFilter === 'All'
+                  ? 'bg-cyan-500 text-slate-950 border-cyan-400 shadow-md shadow-cyan-500/20'
+                  : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700'
+              }`}
+            >
+              <span>All Stages</span>
+              <span className="px-1.5 py-0.2 rounded-full bg-slate-950/60 text-[10px] font-mono">
+                {bomItems.length}
+              </span>
+            </button>
+            {Array.from(
+              new Set([...DEFAULT_STAGES, ...bomItems.map((i) => i.stage).filter(Boolean)])
+            ).map((stg) => {
+              const stageItems = bomItems.filter((i) => (i.stage || 'Stage 1') === stg);
+              const isSelected = stageFilter === stg;
+              const pillColors = getStagePillColor(stg);
+              return (
+                <button
+                  key={stg}
+                  type="button"
+                  onClick={() => setStageFilter(isSelected ? 'All' : stg)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-extrabold border transition cursor-pointer flex items-center space-x-1.5 ${
+                    isSelected ? pillColors.active : pillColors.inactive
+                  }`}
+                >
+                  <span>{stg}</span>
+                  <span className="px-1.5 py-0.2 rounded-full bg-slate-950/60 text-[10px] font-mono">
+                    {stageItems.length}
+                  </span>
+                </button>
+              );
+            })}
           </div>
 
           {/* BOM Items Table */}
@@ -717,6 +806,39 @@ const BOM = () => {
                 placeholder="e.g. ESP32 Development Board, 4G Module"
                 className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-slate-100 focus:outline-none focus:border-cyan-500"
               />
+            </div>
+          </div>
+
+          {/* Stage / Assembly Phase Field */}
+          <div className="p-3 bg-slate-950 border border-cyan-500/25 rounded-2xl space-y-2">
+            <label className="flex text-xs font-bold text-cyan-400 uppercase tracking-wider items-center gap-1.5">
+              <FiLayers className="w-4 h-4" />
+              <span>Assembly Stage / Phase <span className="text-rose-500">*</span></span>
+            </label>
+            <input
+              type="text"
+              required
+              value={bomForm.stage}
+              onChange={(e) => setBomForm({ ...bomForm, stage: e.target.value })}
+              placeholder="Type stage manually (e.g. Stage 1, Stage 2, Prototype...)"
+              className="w-full px-3.5 py-2.5 bg-slate-900 border border-cyan-500/40 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-400 font-bold font-mono"
+            />
+            <div className="flex flex-wrap items-center gap-1.5 pt-1">
+              <span className="text-[10px] text-slate-400 font-medium mr-1">Quick Select Stage:</span>
+              {DEFAULT_STAGES.map((stg) => (
+                <button
+                  key={stg}
+                  type="button"
+                  onClick={() => setBomForm({ ...bomForm, stage: stg })}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-extrabold border transition cursor-pointer ${
+                    bomForm.stage === stg
+                      ? 'bg-cyan-500 text-slate-950 border-cyan-400 shadow-sm'
+                      : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white hover:border-slate-700'
+                  }`}
+                >
+                  {stg}
+                </button>
+              ))}
             </div>
           </div>
 

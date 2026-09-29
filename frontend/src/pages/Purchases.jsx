@@ -781,7 +781,9 @@ const Purchases = () => {
                             }}
                             className="w-4 h-4 text-cyan-500 rounded border-slate-700 bg-slate-950 focus:ring-cyan-500"
                           />
-                          <span>{item.bomItemNumber} - {item.itemDescription} ({item.quantity} {item.unit || 'Pcs'})</span>
+                          <span>
+                            <strong className="text-cyan-400 font-mono">[{item.stage || 'Stage 1'}]</strong> {item.bomItemNumber} - {item.itemDescription} ({item.quantity} {item.unit || 'Pcs'})
+                          </span>
                         </label>
                         <span className="text-emerald-400 font-bold">₹{(item.quantity * item.actualPrice).toLocaleString('en-IN')}</span>
                       </div>
