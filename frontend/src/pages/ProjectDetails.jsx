@@ -54,6 +54,7 @@ const ProjectDetails = () => {
     imageUrls: [''],
     quantity: 1,
     unit: 'Pcs',
+    approxPrice: 0,
     actualPrice: 0,
     procurementMode: 'Online',
     buyerName: 'Amazon',
@@ -141,6 +142,7 @@ const ProjectDetails = () => {
       imageUrls: [''],
       quantity: 1,
       unit: 'Pcs',
+      approxPrice: 0,
       actualPrice: 0,
       procurementMode: 'Online',
       buyerName: buyers.length > 0 ? buyers[0].name : 'Amazon',
@@ -165,7 +167,8 @@ const ProjectDetails = () => {
       imageUrls: imgs,
       quantity: item.quantity,
       unit: item.unit || 'Pcs',
-      actualPrice: item.actualPrice,
+      approxPrice: item.approxPrice || 0,
+      actualPrice: item.actualPrice || 0,
       procurementMode: item.procurementMode || 'Online',
       buyerName: item.buyerName || '',
       stage: item.stage || 'Stage 1',
@@ -374,11 +377,19 @@ const ProjectDetails = () => {
     {
       header: 'Price (₹)',
       cell: (row) => (
-        <div>
-          <span className="text-xs text-slate-300">Unit: ₹{(row.actualPrice || 0).toLocaleString('en-IN')}</span>
-          <p className="text-[11px] text-emerald-400 font-bold mt-0.5">
-            Total: ₹{(row.actualLineTotal || row.quantity * row.actualPrice || 0).toLocaleString('en-IN')}
-          </p>
+        <div className="space-y-0.5">
+          <div className="text-[11px] font-semibold text-cyan-400 flex items-center gap-1">
+            <span>Approx: ₹{(row.approxPrice || 0).toLocaleString('en-IN')}</span>
+            <span className="text-[10px] text-slate-400 font-normal">
+              (Tot: ₹{(row.approxLineTotal || row.quantity * (row.approxPrice || 0)).toLocaleString('en-IN')})
+            </span>
+          </div>
+          <div className="text-[11px] font-bold text-emerald-400 flex items-center gap-1">
+            <span>Actual: ₹{(row.actualPrice || 0).toLocaleString('en-IN')}</span>
+            <span className="text-[10px] text-emerald-300/80 font-normal">
+              (Tot: ₹{(row.actualLineTotal || row.quantity * (row.actualPrice || 0)).toLocaleString('en-IN')})
+            </span>
+          </div>
         </div>
       ),
     },
@@ -634,12 +645,21 @@ const ProjectDetails = () => {
           </div>
         </div>
 
-        <div className="p-3 px-6 bg-slate-950 border border-cyan-500/20 rounded-xl text-right">
-          <div className="text-[11px] text-slate-400 font-bold uppercase">Total Cost</div>
-          <div className="text-2xl font-extrabold text-emerald-400">
-            ₹{(totals.totalActual || 0).toLocaleString('en-IN')}
-          </div>
-        </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="p-3 px-5 bg-slate-950 border border-cyan-500/30 rounded-xl text-right">
+                <div className="text-[10px] text-cyan-400 font-bold uppercase">Total Approx Cost</div>
+                <div className="text-lg font-extrabold text-cyan-300">
+                  ₹{(totals.totalApprox !== undefined ? totals.totalApprox : bomItems.reduce((acc, item) => acc + (item.approxLineTotal || (item.quantity * (item.approxPrice || 0))), 0)).toLocaleString('en-IN')}
+                </div>
+              </div>
+
+              <div className="p-3 px-5 bg-slate-950 border border-emerald-500/30 rounded-xl text-right">
+                <div className="text-[10px] text-emerald-400 font-bold uppercase">Total Actual Cost</div>
+                <div className="text-xl font-extrabold text-emerald-400">
+                  ₹{(totals.totalActual || 0).toLocaleString('en-IN')}
+                </div>
+              </div>
+            </div>
       </div>
 
       {/* Add / Edit BOM Modal */}
@@ -843,8 +863,25 @@ const ProjectDetails = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
+              <label className="block text-xs font-semibold text-cyan-400 uppercase tracking-wider mb-1">
+                Approx. Unit Price (₹)
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={bomForm.approxPrice}
+                onChange={(e) => setBomForm({ ...bomForm, approxPrice: e.target.value })}
+                placeholder="e.g. 150"
+                className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-slate-100 focus:outline-none focus:border-cyan-500 font-mono font-semibold"
+              />
+              <p className="text-[10px] text-cyan-400 font-semibold mt-1">
+                Approx Total: ₹{(Number(bomForm.quantity || 0) * Number(bomForm.approxPrice || 0)).toLocaleString('en-IN')}
+              </p>
+            </div>
+            <div>
               <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
-                Unit Price (₹)
+                Actual Unit Price (₹)
               </label>
               <input
                 type="number"
@@ -852,25 +889,27 @@ const ProjectDetails = () => {
                 step="0.01"
                 value={bomForm.actualPrice}
                 onChange={(e) => setBomForm({ ...bomForm, actualPrice: e.target.value })}
-                className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-slate-100 focus:outline-none focus:border-cyan-500"
+                placeholder="e.g. 140"
+                className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-slate-100 focus:outline-none focus:border-cyan-500 font-mono"
               />
               <p className="text-[10px] text-emerald-400 font-semibold mt-1">
-                Line Total: ₹{(Number(bomForm.quantity || 0) * Number(bomForm.actualPrice || 0)).toLocaleString('en-IN')}
+                Actual Total: ₹{(Number(bomForm.quantity || 0) * Number(bomForm.actualPrice || 0)).toLocaleString('en-IN')}
               </p>
             </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
-                Procurement Mode
-              </label>
-              <select
-                value={bomForm.procurementMode}
-                onChange={(e) => setBomForm({ ...bomForm, procurementMode: e.target.value })}
-                className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-slate-100 focus:outline-none focus:border-cyan-500"
-              >
-                <option value="Online">Online</option>
-                <option value="Offline">Offline</option>
-              </select>
-            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+              Procurement Mode
+            </label>
+            <select
+              value={bomForm.procurementMode}
+              onChange={(e) => setBomForm({ ...bomForm, procurementMode: e.target.value })}
+              className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-slate-100 focus:outline-none focus:border-cyan-500"
+            >
+              <option value="Online">Online</option>
+              <option value="Offline">Offline</option>
+            </select>
           </div>
 
           <div>

@@ -98,12 +98,14 @@ export const getProjectById = async (req, res, next) => {
 
     const bomItems = await ProjectBOMItem.find({ project: project._id }).sort({ bomItemNumber: 1 });
 
+    const totalApprox = bomItems.reduce((acc, item) => acc + (item.approxLineTotal || (item.quantity * item.approxPrice) || 0), 0);
     const totalActual = bomItems.reduce((acc, item) => acc + (item.actualLineTotal || 0), 0);
 
     res.json({
       project,
       bomItems,
       totals: {
+        totalApprox,
         totalActual,
         itemCount: bomItems.length,
       },

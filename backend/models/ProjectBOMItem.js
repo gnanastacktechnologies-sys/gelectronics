@@ -43,6 +43,15 @@ const projectBOMItemSchema = new mongoose.Schema(
       trim: true,
       default: 'Pcs',
     },
+    approxPrice: {
+      type: Number,
+      default: 0,
+      min: [0, 'Approximate Price cannot be negative'],
+    },
+    approxLineTotal: {
+      type: Number,
+      default: 0,
+    },
     actualPrice: {
       type: Number,
       default: 0,
@@ -102,6 +111,7 @@ projectBOMItemSchema.index({ project: 1, bomItemNumber: 1 }, { unique: true });
 
 projectBOMItemSchema.pre('save', function () {
   this.actualLineTotal = (this.quantity || 0) * (this.actualPrice || 0);
+  this.approxLineTotal = (this.quantity || 0) * (this.approxPrice || 0);
 });
 
 const ProjectBOMItem = mongoose.model('ProjectBOMItem', projectBOMItemSchema);

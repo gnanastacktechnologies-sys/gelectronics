@@ -55,6 +55,7 @@ export const addBOMItem = async (req, res, next) => {
       imageUrls,
       unit,
       quantity,
+      approxPrice,
       actualPrice,
       buyerName,
       procurementMode,
@@ -76,6 +77,7 @@ export const addBOMItem = async (req, res, next) => {
       return res.status(400).json({ message: 'Quantity must be a number greater than 0' });
     }
 
+    const appP = Number(approxPrice) >= 0 ? Number(approxPrice) : 0;
     const actP = Number(actualPrice) >= 0 ? Number(actualPrice) : 0;
 
     // Auto generate BOM Item Number if not provided
@@ -114,6 +116,8 @@ export const addBOMItem = async (req, res, next) => {
       imageUrls: imageUrls && Array.isArray(imageUrls) ? imageUrls.filter(u => u && u.trim()) : imageUrl ? [imageUrl.trim()] : [],
       quantity: numQty,
       unit: unit ? unit.trim() : 'Pcs',
+      approxPrice: appP,
+      approxLineTotal: numQty * appP,
       actualPrice: actP,
       actualLineTotal: numQty * actP,
       buyerName: buyerName ? buyerName.trim() : '',
@@ -142,6 +146,7 @@ export const updateBOMItem = async (req, res, next) => {
       imageUrls,
       unit,
       quantity,
+      approxPrice,
       actualPrice,
       buyerName,
       procurementMode,
@@ -192,6 +197,14 @@ export const updateBOMItem = async (req, res, next) => {
       bomItem.quantity = numQty;
     }
 
+    if (approxPrice !== undefined) {
+      const appP = Number(approxPrice);
+      if (isNaN(appP) || appP < 0) {
+        return res.status(400).json({ message: 'Approximate price cannot be negative' });
+      }
+      bomItem.approxPrice = appP;
+    }
+
     if (actualPrice !== undefined) {
       const actP = Number(actualPrice);
       if (isNaN(actP) || actP < 0) {
@@ -207,7 +220,8 @@ export const updateBOMItem = async (req, res, next) => {
     if (purchaseStatus !== undefined) bomItem.purchaseStatus = purchaseStatus;
     if (stockStatus !== undefined) bomItem.stockStatus = stockStatus;
 
-    bomItem.actualLineTotal = bomItem.quantity * bomItem.actualPrice;
+    bomItem.approxLineTotal = bomItem.quantity * (bomItem.approxPrice || 0);
+    bomItem.actualLineTotal = bomItem.quantity * (bomItem.actualPrice || 0);
 
     const updated = await bomItem.save();
     res.json(updated);
